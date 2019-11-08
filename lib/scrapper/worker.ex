@@ -6,7 +6,7 @@ defmodule Headfi.Scrapper.Worker do
   """
   alias Headfi.Scrapper.Item
 
-  @spec process(integer) :: nil
+  @spec process(integer) :: any
   def process(page_num) when is_integer(page_num) do
     page_num
     |> get_page_html
@@ -34,16 +34,36 @@ defmodule Headfi.Scrapper.Worker do
 
       %Item{
         thread_id: Regex.run(regex, thread_id) |> Enum.at(1) |> String.to_integer(),
-        title: itemHtml |> Floki.find("h3.title") |> Floki.text(),
-        currency: currency |> Floki.text() |> String.trim(),
-        price: price |> Floki.text() |> String.trim() |> Float.parse() |> elem(0),
-        ship_to: ship_to |> Floki.text() |> String.trim()
+        title: itemHtml |> Floki.find("h3.title") |> extract_text,
+        currency: extract_text(currency),
+        price: price |> extract_text |> process_price,
+        ship_to: extract_text(ship_to)
       }
     end)
   end
 
-  @spec store_in_db(list(Item.t())) :: nil
+  @spec store_in_db(list(Item.t())) :: any
   defp store_in_db(items) do
-    IEx.pry()
+    Enum.each(items, fn item ->
+      item
+      |> Map.from_struct()
+      |> Headfi.Item.add()
+    end)
+  end
+
+  @spec extract_text(Floxi.html_tree()) :: String.t()
+  defp extract_text(html) do
+    html |> Floki.text() |> String.trim()
+  end
+
+  @spec process_price(String.t()) :: integer
+  defp process_price(price_string) do
+    price_string
+    |> String.trim()
+    |> Float.parse()
+    |> elem(0)
+    # convert dollars -> cents
+    |> Kernel.*(100)
+    |> trunc
   end
 end

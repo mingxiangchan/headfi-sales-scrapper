@@ -7,7 +7,7 @@ defmodule Headfi.Tasks.Seed do
     |> Enum.to_list()
     |> Enum.each(fn page_num ->
       Task.start(fn ->
-        HeadfiScrapper.Worker.process(page_num)
+        Headfi.Scrapper.Worker.process(page_num)
       end)
     end)
   end

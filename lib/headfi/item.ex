@@ -1,3 +1,5 @@
+require IEx
+
 defmodule Headfi.Item do
   use Ecto.Schema
   import Ecto.Changeset
@@ -29,9 +31,18 @@ defmodule Headfi.Item do
     |> validate_required(@required_params)
   end
 
+  @spec add(Map.t()) :: Item.t()
   def add(data) do
-    %Item{}
-    |> Item.changeset(data)
-    |> Repo.insert!()
+    case Repo.get_by(Item, thread_id: data[:thread_id]) do
+      nil ->
+        %Item{}
+        |> Item.changeset(data)
+        |> Repo.insert!()
+
+      item ->
+        item
+        |> Item.changeset(data)
+        |> Repo.update!()
+    end
   end
 end
