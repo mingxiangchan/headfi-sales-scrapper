@@ -6,4 +6,5 @@ config :headfi, Headfi.Repo, [
   username: "postgres",
   password: "",
   hostname: "localhost",
+  log: false,
 ]

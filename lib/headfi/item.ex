@@ -29,6 +29,7 @@ defmodule Headfi.Item do
     record
     |> cast(params, @required_params)
     |> validate_required(@required_params)
+    |> check_max_price
   end
 
   @spec add(Map.t()) :: Item.t()
@@ -43,6 +44,15 @@ defmodule Headfi.Item do
         item
         |> Item.changeset(data)
         |> Repo.update!()
+    end
+  end
+
+  @spec check_max_price(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp check_max_price(changeset) do
+    if get_field(changeset, :price) > 2_147_483_647 do
+      put_change(changeset, :price, 2_147_483_647)
+    else
+      changeset
     end
   end
 end
