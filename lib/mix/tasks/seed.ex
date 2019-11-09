@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Seed do
     {:ok, _} = Application.ensure_all_started(:headfi)
 
     Task.Supervisor.start_link(name: :seed_supervisor)
+    Task.Supervisor.start_link(name: :seed_worker_supervisor)
 
     Task.Supervisor.async_stream_nolink(
       :seed_supervisor,
