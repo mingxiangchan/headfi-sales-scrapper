@@ -55,4 +55,15 @@ defmodule Headfi.Item do
       changeset
     end
   end
+
+  @spec search_title(String.t()) :: list(Item.t())
+  def search_title(title_query) do
+    # filter outliers (e.g. below USD 5.00 or above USD 30,000)
+    query =
+      from(i in Item,
+        where: ilike(i.title, ^title_query) and i.price > 500 and i.price < 30000_00
+      )
+
+    Repo.all(query)
+  end
 end
