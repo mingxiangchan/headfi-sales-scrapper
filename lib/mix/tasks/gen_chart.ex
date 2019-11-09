@@ -1,5 +1,3 @@
-require IEx
-
 defmodule Mix.Tasks.GenChart do
   use Mix.Task
   alias Headfi.Item
@@ -15,7 +13,7 @@ defmodule Mix.Tasks.GenChart do
     if Enum.empty?(results) do
       IO.puts("No results found, unable to generate chart")
     else
-      pic_title = Enum.join(args, "_")
+      pic_title = Enum.join(args, " ")
       generate_chart(results, pic_title)
     end
   end
@@ -26,7 +24,7 @@ defmodule Mix.Tasks.GenChart do
     max_price = Enum.max(prices)
 
     dataset =
-      Enum.reduce(prices, %{0 => 0}, fn price, acc ->
+      Enum.reduce(prices, %{}, fn price, acc ->
         if is_nil(acc[price]) do
           Map.put(acc, price, 1)
         else
@@ -34,23 +32,35 @@ defmodule Mix.Tasks.GenChart do
         end
       end)
 
-    max_quantity = dataset |> Map.values() |> Enum.max()
+    y_interval =
+      cond do
+        max_price >= 5000 -> 500
+        max_price >= 2000 -> 250
+        max_price >= 1000 -> 100
+        max_price >= 500 -> 50
+        max_price >= 200 -> 25
+        true -> 10
+      end
+
     formatted_dataset = Enum.into(dataset, [])
-    filepath = Path.join("generated", "#{pic_title}.png")
+    filepath = Path.join("generated", "#{String.replace(pic_title, " ", "_")}.png")
 
     IO.inspect(dataset)
 
     Gnuplot.plot(
       [
-        [:set, :title, "Price History Chart"],
-        [:set, :xlabel, "Price(USD)"],
-        [:set, :ylabel, "Num Items"],
-        ~w(set xrange [0:#{max_price}])a,
-        ~w(set yrange [0:#{max_quantity + 1}])a,
-        # ~w(set style line 1 linetype 1 linewidth 2 pointtype 7 pointsize 1.5)a,
-        [:set, :term, :pngcairo, :size, '400,400', :font, "Times, 14"],
+        [:set, :ylabel, "Price(USD)"],
+        ~w(set grid)a,
+        ~w(set yrange [0:#{trunc(1.1 * max_price)}])a,
+        ~w(set style fill solid 0.25 border -1)a,
+        ~w(set style boxplot outliers pointtype 7 medianlinewidth 1.5)a,
+        ~w(set style data boxplot)a,
+        ~w(set xtics ("#{pic_title}" 1\) scale 0.0)a,
+        ~w(set xtics nomirror)a,
+        ~w(set ytics #{y_interval})a,
+        [:set, :term, :pngcairo, :size, '600, 800', :font, "Times, 14"],
         [:set, :output, filepath],
-        [:plot, "-", :smooth, :sbezier]
+        ~w(plot "-" using (1\):1 notitle)a
       ],
       [formatted_dataset]
     )

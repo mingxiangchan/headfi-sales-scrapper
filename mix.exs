@@ -11,7 +11,8 @@ defmodule Headfi.Mixfile do
     {:poison, "~> 3.1.0"},
     {:ex_doc, ">= 0.0.0", only: :dev},
     {:floki, "~> 0.23.0"},
-    {:httpoison, "~> 1.6"}
+    {:httpoison, "~> 1.6"},
+    {:gnuplot, "~>1.19"}
   ]
 
   @aliases [
